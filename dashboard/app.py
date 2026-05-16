@@ -147,7 +147,7 @@ DASHBOARD_VIEW_ITEMS: tuple[tuple[str, str], ...] = (
 
     # 운영·리스크
     ("6", "실시간 운영 모니터"),
-    ("7", "할인·쿠폰 운영 리스크"),
+    ("7", "혜택·우대금리 운영 리스크"),
 
     # 모델 검증·진단
     ("8", "학습 결과 아티팩트"),
@@ -5742,9 +5742,9 @@ elif view == "7. 혜택·우대금리 운영 리스크":
             for col in ["avg_churn_probability", "avg_expected_roi"]:
                 if col in display_df.columns:
                     display_df[col] = display_df[col].map(lambda x: f"{float(x):.3f}")
-            _render_dataframe_with_count(display_df, label="페르소나별 헤택택 노출/성과")
+            _render_dataframe_with_count(display_df, label="페르소나별 헤택 노출/성과")
         else:
-            st.warning("혜택택 노출 집계를 계산할 데이터가 없습니다.")
+            st.warning("혜택 노출 집계를 계산할 데이터가 없습니다.")
 
     with tab2:
         left, right = st.columns(2)
