@@ -147,7 +147,7 @@ DASHBOARD_VIEW_ITEMS: tuple[tuple[str, str], ...] = (
 
     # 운영·리스크
     ("6", "실시간 운영 모니터"),
-    ("7", "할인·쿠폰 운영 리스크"),
+    ("7", "혜택·우대금리 운영 리스크"),
 
     # 모델 검증·진단
     ("8", "학습 결과 아티팩트"),
@@ -194,11 +194,12 @@ LEGACY_VIEW_REDIRECTS: dict[str, str] = {
     "13. 운영 한눈에 보기": "6. 실시간 운영 모니터",
     "14. 증분 성과 / A-B 실험": "10. 증분 성과 / A-B 실험",
     "15. 설명가능성 / 고객별 개입 이유": "11. 설명가능성 / 고객별 개입 이유",
-    "17. 할인·쿠폰 운영 리스크": "7. 할인·쿠폰 운영 리스크",
+    "17. 할인·쿠폰 운영 리스크": "7. 혜택·우대금리 운영 리스크",
+    "7. 할인·쿠폰 운영 리스크": "7. 혜택·우대금리 운영 리스크",
 
     # 의사결정 엔진 비교 삭제 직후 13개 구조에서 새 번호로 이동
     "7. 실시간 운영 모니터": "6. 실시간 운영 모니터",
-    "8. 할인·쿠폰 운영 리스크": "7. 할인·쿠폰 운영 리스크",
+    "8. 할인·쿠폰 운영 리스크": "7. 혜택·우대금리 운영 리스크",
     "9. 학습 결과 아티팩트": "8. 학습 결과 아티팩트",
     "10. 이탈 시점 예측 (Survival Analysis)": "9. 이탈 시점 예측 (Survival Analysis)",
     "11. 증분 성과 / A-B 실험": "10. 증분 성과 / A-B 실험",
@@ -210,7 +211,7 @@ LEGACY_VIEW_REDIRECTS: dict[str, str] = {
     "9. 의사결정 엔진 비교": "4. 예산 최적화 및 리텐션 타겟",
     "10. 증분 성과 / A-B 실험": "10. 증분 성과 / A-B 실험",
     "11. 설명가능성 / 고객별 개입 이유": "11. 설명가능성 / 고객별 개입 이유",
-    "13. 할인·쿠폰 운영 리스크": "7. 할인·쿠폰 운영 리스크",
+    "13. 할인·쿠폰 운영 리스크": "7. 혜택·우대금리 운영 리스크",
 }
 REALTIME_REFRESH_VIEWS: set[str] = {
     "6. 실시간 운영 모니터",
@@ -218,7 +219,7 @@ REALTIME_REFRESH_VIEWS: set[str] = {
 
 INSIGHT_HEAVY_VIEWS: set[str] = {
     "6. 실시간 운영 모니터",
-    "7. 할인·쿠폰 운영 리스크",
+    "7. 혜택·우대금리 운영 리스크",
     "10. 증분 성과 / A-B 실험",
     "11. 설명가능성 / 고객별 개입 이유",
 }
@@ -2735,11 +2736,17 @@ def _render_html_table(
     else:
         st.caption(_describe_table_count(safe_df, label=label))
 
-    st.dataframe(
-        view_df,
-        use_container_width=True,
-        hide_index=hide_index,
-        height=max(280, int(max_height)),
+    # st.dataframe(
+    #     view_df,
+    #     use_container_width=True,
+    #     hide_index=hide_index,
+    #     height=max(280, int(max_height)),
+    # )
+
+    html_table = view_df.to_html(index=not hide_index, classes=["oai-data-table"], border=0, escape=True)
+    st.markdown(
+        f"<div class='oai-table-wrapper' style='max-height:{max(280, int(max_height))}px'>{html_table}</div>",
+        unsafe_allow_html=True,
     )
 
 
@@ -3344,7 +3351,7 @@ with st.sidebar:
             "CSV 파일을 업로드하세요",
             type=["csv", "tsv"],
             key="csv_upload",
-            help="고객 데이터, 거래 데이터, 이벤트 데이터 등 분석 가능한 CSV를 업로드하세요. 파일 크기 제한은 없습니다.",
+            help="금융 고객 데이터, 거래/계좌 이용 데이터, 상담·이벤트 데이터 등 분석 가능한 CSV를 업로드하세요. 파일 크기 제한은 없습니다.",
         )
 
     if uploaded_file is not None:
@@ -3572,8 +3579,8 @@ with st.sidebar:
                             help=(
                                 "이 원본 값을 어떤 표준 이벤트로 분류할지 선택하세요. "
                                 "visit=접속, page_view=조회, search=검색, "
-                                "add_to_cart=장바구니, purchase=구매·결제, "
-                                "support_contact=문의·환불, other=기타, "
+                                "add_to_cart=관심상품 등록, purchase=금융상품 가입·거래, "
+                                "support_contact=상담·민원, other=기타, "
                                 "ignore=분석에서 제외."
                             ),
                         ),
@@ -3625,12 +3632,12 @@ with st.sidebar:
             st.markdown("### 📛 이탈 고객 정의")
             recommended_churn_days = int(getattr(preview, "recommended_churn_days", None) or 30)
             st.caption(
-                "마지막 활동(이벤트/주문) 이후 며칠 동안 활동이 없으면 \"이탈\"로 분류할지 정합니다. "
+                "마지막 활동(이벤트/거래) 이후 며칠 동안 활동이 없으면 \"이탈\"로 분류할지 정합니다. "
                 "업종에 따라 적절한 값이 다릅니다."
             )
             if getattr(preview, "recommended_churn_days", None):
                 st.info(
-                    f"업로드 데이터의 평균 활동/구매 주기를 기준으로 "
+                    f"업로드 데이터의 평균 활동/금융 거래 주기를 기준으로 "
                     f"**{recommended_churn_days}일**을 추천합니다."
                 )
             churn_inactivity_days = st.slider(
@@ -3642,9 +3649,9 @@ with st.sidebar:
                 key="churn_inactivity_days",
                 help=(
                     "**서비스 성격별 권장 기준:**\n\n"
-                    "- **7\~14일:** 데일리 앱 (게임, SNS)\n"
-                    "- **30일:** 일반 커머스, 라이프스타일\n\n"
-                    "- **60\~90일:** 정기 구독 서비스 (OTT, 멤버십)\n\n"
+                    "- **7\~14일:** 매일 쓰는 금융 앱 (간편결제, 조회 중심 서비스)\n"
+                    "- **30일:** 일반 금융 거래/멤버십 서비스\n\n"
+                    "- **60\~90일:** 장기 금융상품·정기 납입 서비스\n\n"
                     "설정한 기간 동안 접속 기록이 없으면 '이탈'로 간주합니다."
                 ),
             )
@@ -3936,6 +3943,7 @@ with st.sidebar:
             max_value=5,
             step=1,
             key="control_recommendation_per_customer",
+            value=3,
         )
     else:
         recommendation_per_customer = int(st.session_state["control_recommendation_per_customer"])
@@ -4193,7 +4201,7 @@ if view in INSIGHT_HEAVY_VIEWS and not (view == "6. 실시간 운영 모니터" 
     if view == "12. 데이터 진단 / 시뮬레이터 충실도":
         data_diagnostics = build_data_diagnostics(insight_bundle)
 
-    if view == "7. 할인·쿠폰 운영 리스크":
+    if view == "7. 혜택·우대금리 운영 리스크":
         coupon_risk_overview = build_coupon_risk_overview(insight_bundle)
 
     if view == "11. 설명가능성 / 고객별 개입 이유":
@@ -4380,7 +4388,7 @@ elif view == "2. 코호트 리텐션 곡선":
 
     if selected_retention_mode == "point":
         st.info(
-            "해당 월 재방문율(point)은 재활성화 고객 때문에 month 2가 month 1보다 높아질 수 있습니다. "
+            "해당 월 재이용률(point)은 재활성화 고객 때문에 month 2가 month 1보다 높아질 수 있습니다. "
             "최근/오래된 코호트를 섞어 해석하지 않도록 아래 공통 비교 지표를 함께 보세요."
         )
     else:
@@ -4871,8 +4879,8 @@ elif view == "5. 개인화 추천":
         "시뮬레이터 데모에서는 python src/main.py --mode recommend 를 실행한 뒤 새로고침하세요.",
     ):
         st.stop()
-    st.subheader("최종 타겟 고객 대상 개인화 추천")
-    st.caption("현재 예산·이탈 임계값으로 선별된 최종 타겟 고객에게만 새 추천을 생성합니다. 추천 점수는 고객 구매 이력, 최근 관심, 세그먼트 인기, 전역 인기를 혼합해 계산합니다.")
+    st.subheader("최종 타겟 고객 대상 개인화 금융 추천")
+    st.caption("현재 예산·이탈 임계값으로 선별된 최종 타겟 고객에게만 새 추천을 생성합니다. 추천 점수는 고객의 금융 거래 이력, 최근 관심 상품군, 세그먼트 반응, 전체 선호도를 혼합해 계산합니다.")
 
     budget_context = recommendation_summary.get('budget_context', {}) if isinstance(recommendation_summary, dict) else {}
     current_target_count = int(
@@ -4924,7 +4932,7 @@ elif view == "5. 개인화 추천":
             category_counts,
             x='recommended_category',
             y='recommend_count',
-            title='추천 카테고리 분포',
+            title='추천 금융상품군 분포',
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -4989,7 +4997,7 @@ elif view == "6. 실시간 운영 모니터":
             _page_demo = {}
         _page_demo_running = _page_demo.get("running", False)
 
-        st.caption("시연을 시작하면 설정된 간격마다 가상 고객 이벤트(방문, 구매 등)가 자동 생성되고, 이탈 점수 재산정 및 액션 큐가 갱신됩니다.")
+        st.caption("시연을 시작하면 설정된 간격마다 가상 고객 이벤트(로그인, 금융상품 조회·거래 등)가 자동 생성되고, 이탈 점수 재산정 및 액션 큐가 갱신됩니다.")
         _demo_bar = st.container()
         with _demo_bar:
             if _page_demo_running:
@@ -5348,7 +5356,7 @@ elif view == "9. 이탈 시점 예측 (Survival Analysis)":
             {'key': 'test_rows', 'value': survival_metrics.get('test_rows')},
             {'key': 'feature_count_before_encoding', 'value': survival_metrics.get('feature_count_before_encoding')},
             {'key': 'feature_count_after_encoding', 'value': survival_metrics.get('feature_count_after_encoding')},
-            {'key': 'penalizer', 'value': survival_metrics.get('penalizer')},
+            {'key': 'penalizer', 'value': survival_metrics.get('fitted_penalizer')},
         ])
         st.markdown("### Survival 메타데이터")
         _render_artifact_table(meta_df, label="Survival 메타데이터")
@@ -5441,7 +5449,7 @@ elif view == "10. 증분 성과 / A-B 실험":
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("증분 리텐션", pct(float(exp_metrics.get('incremental_retention', 0.0))))
         m2.metric("추가 유지 고객 수", f"{int(round(float(exp_metrics.get('incremental_retained_customers', 0.0)))):,}명")
-        m3.metric("쿠폰 집행 총액", money(float(exp_metrics.get('coupon_spend_total', 0.0))))
+        m3.metric("혜택 집행 총액", money(float(exp_metrics.get('coupon_spend_total', 0.0))))
         cpic_val = exp_metrics.get('incremental_cpic', np.nan)
         _incremental_n = float(exp_metrics.get('incremental_retained_customers', 0.0))
         if pd.notna(cpic_val):
@@ -5516,9 +5524,9 @@ elif view == "10. 증분 성과 / A-B 실험":
         _business = _ab_test_meta.get("business_metrics", {}) or {}
         _treat_n = float(_sample_sizes.get("treatment", 0)) or float(_current_min_n or 0)
         _coupon_total = float(_business.get("treatment_coupon_cost_total", 0.0)) or float(exp_metrics.get('coupon_spend_total', 0.0))
-        # 1인당 매출 추정: 증분 매출 총액 / Treatment 표본 수. 음수면 절댓값으로 추정한 평균 매출 사용.
+        # 1인당 수익 추정: 증분 수익 총액 / Treatment 표본 수. 음수면 절댓값으로 추정한 평균 수익 사용.
         _inc_revenue_per_treated = abs(float(_business.get("incremental_revenue_per_treated_customer", 0.0)))
-        # 추정 평균 매출 = 1%p 증분당 1명당 매출 환산. 데이터 없으면 100,000원 기본값.
+        # 추정 평균 수익 = 1%p 증분당 1명당 수익 환산. 데이터 없으면 100,000원 기본값.
         _avg_revenue_per_retained = _inc_revenue_per_treated * 100 if _inc_revenue_per_treated > 0 else 100000
         _scenarios = [
             ("보수적 (+1%p)", 0.01),
@@ -5536,15 +5544,15 @@ elif view == "10. 증분 성과 / A-B 실험":
                 "시나리오": _label,
                 "증분 리텐션": f"+{_lift*100:.1f}%p",
                 "추가 유지 고객": f"{_additional_retained:,.0f}명",
-                "추가 매출": money(_additional_revenue),
-                "쿠폰비 반영 ROI": f"{_roi*100:+.1f}%",
+                "추가 수익": money(_additional_revenue),
+                "혜택비 반영 ROI": f"{_roi*100:+.1f}%",
                 "CPIC": money(_cpic) if _additional_retained > 0 else "-",
             })
         _whatif_df = pd.DataFrame(_whatif_rows)
         _render_dataframe_with_count(_whatif_df, label="효과 크기 가정별 시뮬레이션", prefer_static=True)
 
         st.caption(
-            "※ 본 표는 동일 표본·쿠폰비 조건에서 효과 크기만 가정해 산출한 추정치입니다. "
+            "※ 본 표는 동일 표본·혜택비 조건에서 효과 크기만 가정해 산출한 추정치입니다. "
             "현재 시뮬레이터 표본으로는 실제 효과 크기를 신뢰성 있게 검출할 수 없으므로, "
             "운영 데이터가 누적되면 본 시스템이 동일 방식으로 실효 ROI를 자동 산출하도록 설계되어 있습니다."
         )
@@ -5689,7 +5697,7 @@ elif view == "12. 데이터 진단 / 시뮬레이터 충실도":
         "distribution": distribution_df.head(30).to_dict(orient="records") if not distribution_df.empty else [],
     }
 
-elif view == "7. 할인·쿠폰 운영 리스크":
+elif view == "7. 혜택·우대금리 운영 리스크":
     _coupon_has_data = False
     if isinstance(coupon_risk_overview, dict):
         _coupon_has_data = bool(
@@ -5700,14 +5708,14 @@ elif view == "7. 할인·쿠폰 운영 리스크":
             or not coupon_risk_overview.get("intensity_mix", pd.DataFrame()).empty
         )
     if _simulator_mode_unavailable(
-        "할인·쿠폰 운영 리스크",
+        "혜택·우대금리 운영 리스크",
         _coupon_has_data,
-        "쿠폰 노출/리딤/믹스 리스크 산출물이 없습니다.",
+        "혜택 노출/신청/믹스 리스크 산출물이 없습니다.",
         "시뮬레이터 데모에서는 recommend, abtest 또는 관련 운영 분석 산출물을 먼저 생성한 뒤 새로고침하세요.",
     ):
         st.stop()
-    st.subheader("할인·쿠폰 운영 리스크")
-    st.caption("쿠폰 노출 누적, 리딤 효율, 강도별 효과, 추천/개입 믹스를 같이 보면서 할인 남발의 부작용 가능성을 점검합니다.")
+    st.subheader("혜택·우대금리 운영 리스크")
+    st.caption("혜택 노출 누적, 신청·전환 효율, 강도별 효과, 금융 추천/개입 믹스를 같이 보면서 과도한 우대 제공의 부작용 가능성을 점검합니다.")
 
     risk_metrics = coupon_risk_overview.get("metrics", {})
     m1, m2, m3, m4, m5 = st.columns(5)
@@ -5715,11 +5723,11 @@ elif view == "7. 할인·쿠폰 운영 리스크":
     m2.metric("고노출 고객 수", f"{int(risk_metrics.get('high_exposure_customers', 0)):,}명")
     m3.metric("전체 노출 수", f"{int(risk_metrics.get('total_exposures', 0)):,}회")
     m4.metric("오픈율", pct(float(risk_metrics.get('open_rate', 0.0))) if pd.notna(risk_metrics.get('open_rate', np.nan)) else "-")
-    m5.metric("리딤률", pct(float(risk_metrics.get('redeem_rate', 0.0))) if pd.notna(risk_metrics.get('redeem_rate', np.nan)) else "-")
+    m5.metric("신청·전환율", pct(float(risk_metrics.get('redeem_rate', 0.0))) if pd.notna(risk_metrics.get('redeem_rate', np.nan)) else "-")
 
     flags_df = coupon_risk_overview.get("flags_df", pd.DataFrame())
     if not flags_df.empty:
-        _render_dataframe_with_count(flags_df, label="쿠폰 운영 리스크 플래그", prefer_static=True)
+        _render_dataframe_with_count(flags_df, label="혜택 운영 리스크 플래그", prefer_static=True)
 
     tab1, tab2, tab3 = st.tabs(["페르소나별 노출", "추천/강도 믹스", "운영 해석"])
 
@@ -5728,15 +5736,15 @@ elif view == "7. 할인·쿠폰 운영 리스크":
         if not segment_df.empty:
             segment_df_display = segment_df.copy()                                            # ← 추가
             segment_df_display["persona"] = segment_df_display["persona"].map(label_persona)  # ← 추가
-            fig = px.bar(segment_df_display.head(12), x="persona", y="avg_coupon_exposure", hover_data=[col for col in ["avg_churn_probability", "avg_expected_roi"] if col in segment_df_display.columns], title="페르소나별 평균 쿠폰 노출")  # ← segment_df → segment_df_display
+            fig = px.bar(segment_df_display.head(12), x="persona", y="avg_coupon_exposure", hover_data=[col for col in ["avg_churn_probability", "avg_expected_roi"] if col in segment_df_display.columns], title="페르소나별 평균 혜택택 노출")  # ← segment_df → segment_df_display
             st.plotly_chart(fig, use_container_width=True)
             display_df = segment_df_display.copy()                                            # ← segment_df → segment_df_display
             for col in ["avg_churn_probability", "avg_expected_roi"]:
                 if col in display_df.columns:
                     display_df[col] = display_df[col].map(lambda x: f"{float(x):.3f}")
-            _render_dataframe_with_count(display_df, label="페르소나별 쿠폰 노출/성과")
+            _render_dataframe_with_count(display_df, label="페르소나별 헤택 노출/성과")
         else:
-            st.warning("쿠폰 노출 집계를 계산할 데이터가 없습니다.")
+            st.warning("혜택 노출 집계를 계산할 데이터가 없습니다.")
 
     with tab2:
         left, right = st.columns(2)
@@ -5744,7 +5752,7 @@ elif view == "7. 할인·쿠폰 운영 리스크":
         intensity_mix = coupon_risk_overview.get("intensity_mix", pd.DataFrame())
         with left:
             if not recommendation_mix.empty:
-                fig = px.pie(recommendation_mix, names="recommended_category", values="count", title="추천 카테고리 믹스")
+                fig = px.pie(recommendation_mix, names="recommended_category", values="count", title="추천 금융상품군 믹스")
                 st.plotly_chart(fig, use_container_width=True)
         with right:
             if not intensity_mix.empty:
@@ -5762,9 +5770,9 @@ elif view == "7. 할인·쿠폰 운영 리스크":
         else:
             st.markdown("- high 강도 prior effect를 찾지 못했습니다.")
         st.markdown(
-            "- 노출 고객 수와 리딤률을 함께 봐야 합니다. 노출은 많은데 리딤이 낮으면 학습효과/피로 누적 가능성이 큽니다.\n"
-            "- price_sensitive 성향이 강한 고객군은 단기 반응은 좋을 수 있지만, 장기적으로는 마진 희석과 할인 의존이 커질 수 있습니다.\n"
-            "- support 이슈형 고객은 쿠폰보다 서비스 회복 메시지나 CS 해결이 더 나을 수 있습니다."
+            "- 노출 고객 수와 신청·전환율을 함께 봐야 합니다. 노출은 많은데 전환이 낮으면 금융 혜택 피로 누적 가능성이 큽니다.\n"
+            "- price_sensitive 성향이 강한 고객군은 단기 반응은 좋을 수 있지만, 장기적으로는 수익성 희석과 우대 혜택 의존이 커질 수 있습니다.\n"
+            "- support 이슈형 고객은 금리·수수료 혜택보다 상담 메시지나 민원 해결이 더 나을 수 있습니다."
         )
 
     llm_payload = {

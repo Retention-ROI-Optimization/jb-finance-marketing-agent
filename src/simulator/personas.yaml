@@ -130,7 +130,6 @@ personas:
     price_sensitivity: 0.72
     recovery_prob: 0.22
     acquisition_weight: 0.08
-
 # uplift_segments 값을 더 극단적으로 조정
 uplift_segments:
   persuadable:
