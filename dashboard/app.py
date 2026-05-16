@@ -127,6 +127,7 @@ LEGACY_VIEW_REDIRECTS: dict[str, str] = {
     "14. 증분 성과 / A-B 실험": "10. 증분 성과 / A-B 실험",
     "15. 설명가능성 / 고객별 개입 이유": "11. 설명가능성 / 고객별 개입 이유",
     "17. 할인·쿠폰 운영 리스크": "7. 혜택·우대금리 운영 리스크",
+    "7. 할인·쿠폰 운영 리스크": "7. 혜택·우대금리 운영 리스크",
 
     # 의사결정 엔진 비교 삭제 직후 13개 구조에서 새 번호로 이동
     "7. 실시간 운영 모니터": "6. 실시간 운영 모니터",
@@ -4878,7 +4879,6 @@ elif view == "5. 개인화 추천":
             display_df['target_priority_score'] = display_df['target_priority_score'].map(lambda x: f"{x:.3f}")
         if 'recommendation_score' in display_df.columns:
             display_df['recommendation_score'] = display_df['recommendation_score'].map(lambda x: f"{x:.3f}")
-        _render_dataframe_with_count(display_df, label="개인화 추천 테이블")
 
     llm_payload = {
         'recommendation_summary': recommendation_summary,
@@ -5402,7 +5402,7 @@ elif view == "10. 증분 성과 / A-B 실험":
                         st.info(
                             f"📊 **p = {_p_float:.4f} 의 의미**\n\n"
                             f"이 수치는 'Treatment와 Control 사이에 차이가 없다'는 가설이 매우 그럴듯하다는 뜻입니다. "
-                            f"즉 관측된 증분 리텐션은 **금융 고객 개입 전략 실패의 증거가 아니라, 효과를 측정할 수 없었다는 증거**입니다. "
+                            f"즉 관측된 증분 리텐션은 **캠페인 실패의 증거가 아니라, 효과를 측정할 수 없었다는 증거**입니다. "
                             f"통계적으로 유의한 결론을 도출하려면 표본 확대 또는 효과 크기 증가가 필요합니다."
                         )
                     else:

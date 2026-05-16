@@ -17,14 +17,14 @@ _OPTIONAL_COLUMNS = [
 ]
 
 _ACTIVITY_LABELS = {
-    "all_activity": "전체 활동(쿠폰/지원 포함)",
-    "core_engagement": "핵심 참여(방문·검색·장바구니·구매)",
-    "purchase_only": "구매만",
-    "purchase_or_redeem": "구매 또는 쿠폰 사용",
+    "all_activity": "전체 금융 활동(혜택/상담 포함)",
+    "core_engagement": "핵심 금융 이용(접속·조회·관심상품·거래)",
+    "purchase_only": "금융상품 가입·거래만",
+    "purchase_or_redeem": "금융상품 가입·거래 또는 혜택 사용",
 }
 
 _RETENTION_MODE_LABELS = {
-    "point": "해당 월 재방문율",
+    "point": "해당 월 재이용률",
     "rolling": "이후 재활성 포함 롤링 리텐션",
 }
 
