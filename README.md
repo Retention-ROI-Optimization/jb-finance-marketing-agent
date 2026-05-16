@@ -1,3 +1,69 @@
+# JB금융 디지털 마케팅 AI Agent — Decision Engine
+
+> JB금융그룹 지정주제 3 「마케팅AI · 디지털마케팅AI Agent 서비스개발」 출품작
+> 본 레포는 마케팅 Agent의 **Decision Engine** (타겟팅·예산 최적화·추천)을 담당합니다.
+
+## Project Context
+
+JB금융그룹의 디지털 마케팅 워크플로우에서 본 시스템은 다음 질문에 답합니다.
+
+- **WHO**: 어떤 고객에게 마케팅을 보내야 하는가? (이탈 위험 + Uplift 반응성)
+- **WHEN**: 언제 보내야 하는가? (Survival Analysis 기반 골든타임)
+- **WHICH**: 어떤 상품·액션을 추천해야 하는가? (세그먼트별 전략)
+- **HOW MUCH**: 예산을 어떻게 배분해야 ROI가 최대화되는가? (Budget Optimization)
+
+### 도메인 매핑
+
+본 레포의 시뮬레이터 변수는 의사결정 엔진의 도메인 비종속 식별자입니다. 실제 JB금융 운영 환경에서는 어댑터 레이어를 통해 다음과 같이 매핑됩니다.
+
+| 시뮬레이터 변수 | JB금융 도메인 의미 |
+|---|---|
+| `visit` event | 앱·인터넷뱅킹 접속 |
+| `page_view` event | 상품 상세 조회 |
+| `search` event | 금리·한도 조회 |
+| `add_to_cart` event | 가입 시도 (전자약정 진입) |
+| `purchase` event | 상품 가입 완료 (예적금·대출·카드·펀드·외환) |
+| `support_contact` event | 고객센터·챗봇·PB 문의, 해지신청 |
+| `coupon_open` / `coupon_redeem` | 마케팅 알림 열람 / 우대금리·쿠폰 사용 |
+| `vip_loyal` persona | WM 우수고객 (예치자산 1억+, 거래활성 상위 10%) |
+| `regular_loyal` persona | 주거래 안정고객 (급여이체 + 자동이체 + 3개 이상 상품) |
+| `price_sensitive` persona | 금리민감 고객 (만기마다 타행 비교, 우대금리 강반응) |
+| `explorer` persona | 신규 디지털 유입 (앱 다운로드 후 1~2개 상품만 체험) |
+| `churn_progressing` persona | 이탈 진행 고객 (잔액·거래 빈도 급감, 골든타임) |
+| `new_signup` persona | 신규가입 90일 이내 (온보딩 구간) |
+| `monetary` feature | 금융자산 잔액 (예적금+펀드+대출잔액 가중합) |
+| `frequency` feature | 월평균 거래 건수 (출금·이체·결제·가입 통합) |
+| `avg_order_value` | 건당 평균 거래금액 |
+| `price_sensitivity` | 금리 민감도 (만기 이탈·타행 송금 이력 기반) |
+| `treatment_lift` | 캠페인 처치 효과 (우대금리 발송 시 거래 상승 정도) |
+
+상품 카테고리(`item_category`)는 다음을 다룹니다.
+
+`deposit` (예적금) · `loan` (대출) · `card` (카드) · `fund` (펀드·투자) · `fx` (외환·송금) · `insurance` (보험)
+
+### Uplift 4-Segment Marketing Policy
+
+| 세그먼트 | 정의 | 마케팅 정책 |
+|---|---|---|
+| **Persuadable** ★ | 캠페인 받으면 거래, 안 받으면 이탈 | 최우선 타겟 — 우대금리·캐시백 발송 |
+| **Sure Thing** | 캠페인 유무 무관하게 거래 | 발송 제외 (가성비 없음) |
+| **Lost Cause** | 캠페인 받아도 거래 안 함 | 발송 제외, 채널·메시지 다변화 후 재평가 |
+| **Sleeping Dog** ⚠ | 캠페인 받으면 오히려 이탈 (피로·거부감) | **발송 절대 금지** (역효과) |
+
+### 규제 적합성
+
+- **금융소비자보호법** — 마케팅 콘텐츠 발송 전 단정 표현(`반드시`·`보장` 등) 자동 차단, 상품유형별 필수 고지문 강제 삽입 (가드레일 모듈)
+- **개인정보보호법·신용정보법** — 학습·추론 단계 PII 비식별화, 외부 API에 식별정보 미전송
+- **금융위 AI 가이드라인 (2021)** — 모든 의사결정에 reason code 제공 (`risk_reason_codes`, `action_reason_codes`, `guardrail_codes`) — 설명가능성 + 차별 방지
+- **마이데이터 표준 API** — 본인 동의 범위 내 활용 원칙 준수, 어댑터 레이어 호환 설계
+
+### 본선 단계 확장 (예정)
+
+- 콘텐츠 생성 Agent (Gen AI + RAG) — 채널·언어별 마케팅 콘텐츠 자동 생성
+- LangGraph 기반 멀티 Agent 오케스트레이션 시각화
+- 자체 sLLM 미세조정 (외부 LLM 의존성 해소)
+- JB금융 내부 CRM·MyData API 실연동 PoC
+
 # Retention ROI Project
 
 ## Project Overview
