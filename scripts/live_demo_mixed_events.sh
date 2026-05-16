@@ -160,7 +160,7 @@ payload = {
     "event_time": now.isoformat(),
     "amount": amount,
     "source_event_id": f"demo-existing-{cid}-{event_type}-{int(now.timestamp())}-{uuid.uuid4().hex[:6]}",
-    "item_category": random.choice(["fashion", "beauty", "electronics", "grocery", "sports", "home"]),
+    "item_category": random.choice(["deposit", "loan", "card", "fund", "fx", "insurance"]),
     "channel": random.choice(["web", "app", "mobile_web", "crm"]),
     "session_id": f"session-{cid}-{uuid.uuid4().hex[:8]}",
     "raw_payload": {

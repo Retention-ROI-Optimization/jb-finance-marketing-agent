@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 
-_DEFAULT_CATEGORIES = np.array(["fashion", "beauty", "personal_care", "grocery", "sports", "health"], dtype=object)
+_DEFAULT_CATEGORIES = np.array(["deposit", "loan", "card", "fund", "fx", "insurance"], dtype=object)
 _DEFAULT_CATEGORY_PROBS = np.array([0.20, 0.18, 0.18, 0.16, 0.14, 0.14], dtype=float)
 
 

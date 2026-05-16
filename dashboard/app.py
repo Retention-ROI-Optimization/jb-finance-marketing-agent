@@ -12,6 +12,74 @@ import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
 
+# ──────────────────────────────────────────────────────────────────
+# 금융 도메인 표시 라벨
+# 코드 내부 키는 영문 그대로 유지하고, 대시보드 표시 시에만 한글화.
+# 매핑에 없는 값은 키 그대로 표시 (안전한 fallback).
+# ──────────────────────────────────────────────────────────────────
+
+PERSONA_DISPLAY_LABELS = {
+    "vip_loyal": "WM 우수고객 (예치자산 1억+)",
+    "regular_loyal": "주거래 안정고객",
+    "price_sensitive": "금리민감 고객",
+    "explorer": "신규 디지털 유입",
+    "churn_progressing": "이탈 진행 고객",
+    "new_signup": "신규가입 90일 이내",
+}
+
+UPLIFT_SEGMENT_DISPLAY_LABELS = {
+    "persuadable": "반응형 ★ (발송 권장)",
+    "sure_thing": "자발 거래형 (발송 불필요)",
+    "lost_cause": "무반응형 (발송 비효율)",
+    "sleeping_dog": "역효과형 ⚠ (발송 금지)",
+    "Persuadables": "반응형 ★ (발송 권장)",  # preprocessor에서 대문자/복수형으로 라벨링되는 케이스 대응
+    "Sure Things": "자발 거래형 (발송 불필요)",
+    "Lost Causes": "무반응형 (발송 비효율)",
+    "Sleeping Dogs": "역효과형 ⚠ (발송 금지)",
+}
+
+EVENT_TYPE_DISPLAY_LABELS = {
+    "visit": "앱·인터넷뱅킹 접속",
+    "page_view": "상품 상세 조회",
+    "search": "금리·한도 조회",
+    "add_to_cart": "가입 시도 (전자약정 진입)",
+    "remove_from_cart": "가입 중도 이탈",
+    "purchase": "상품 가입 완료 (예적금·대출·카드 등)",
+    "support_contact": "고객센터·챗봇 문의",
+    "refund": "해지·중도해지",
+    "coupon_open": "마케팅 알림 열람",
+    "coupon_redeem": "우대금리·쿠폰 사용",
+}
+
+CATEGORY_DISPLAY_LABELS = {
+    "deposit": "예적금",
+    "loan": "대출",
+    "card": "카드",
+    "fund": "펀드·투자",
+    "fx": "외환·송금",
+    "insurance": "보험",
+    "pension": "연금·IRP",
+    "wm": "자산관리",
+    "general": "기타",
+}
+
+
+def label_persona(key: str) -> str:
+    """페르소나 키를 한글 라벨로. 없으면 원본 반환."""
+    return PERSONA_DISPLAY_LABELS.get(str(key), str(key))
+
+
+def label_uplift_segment(key: str) -> str:
+    return UPLIFT_SEGMENT_DISPLAY_LABELS.get(str(key), str(key))
+
+
+def label_event_type(key: str) -> str:
+    return EVENT_TYPE_DISPLAY_LABELS.get(str(key), str(key))
+
+
+def label_category(key: str) -> str:
+    return CATEGORY_DISPLAY_LABELS.get(str(key), str(key))
+
 from dashboard.services.api_client import (
     advance_realtime_stream,
     fetch_personalized_recommendations,
@@ -4199,6 +4267,7 @@ if view == "1. 이탈현황":
             .agg(at_risk_count=("customer_id", "count"))
             .sort_values("at_risk_count", ascending=False)
         )
+        persona_risk["persona"] = persona_risk["persona"].map(label_persona)  # ← 추가
 
         bar_fig = px.bar(
             persona_risk,
@@ -4212,6 +4281,8 @@ if view == "1. 이탈현황":
     display_df = risk_customers[
         ["customer_id", "persona", "churn_probability", "clv", "uplift_score", "uplift_segment"]
     ].copy()
+    display_df["persona"] = display_df["persona"].map(label_persona)                  # ← 추가
+    display_df["uplift_segment"] = display_df["uplift_segment"].map(label_uplift_segment)  # ← 추가
     display_df["churn_probability"] = display_df["churn_probability"].map(lambda x: f"{x:.3f}")
     display_df["clv"] = display_df["clv"].map(money)
     display_df["uplift_score"] = display_df["uplift_score"].map(lambda x: f"{x:.3f}")
@@ -4423,8 +4494,10 @@ elif view == "3. Uplift·CLV 세그먼트 분석":
     ) if "uplift_segment" in customers.columns else pd.DataFrame()
 
     if not segment_dist.empty:
+        segment_dist_display = segment_dist.copy()                                          # ← 추가
+        segment_dist_display["uplift_segment"] = segment_dist_display["uplift_segment"].map(label_uplift_segment)  # ← 추가
         seg_fig = px.bar(
-            segment_dist,
+            segment_dist_display,                                                            # ← segment_dist → segment_dist_display 로 변경
             x="uplift_segment",
             y="customer_count",
             text="customer_count",
@@ -4433,7 +4506,7 @@ elif view == "3. Uplift·CLV 세그먼트 분석":
         )
         st.plotly_chart(seg_fig, use_container_width=True)
 
-        segment_display = segment_dist.copy()
+        segment_display = segment_dist_display.copy()                                        # ← segment_dist → segment_dist_display
         for col in ["avg_clv", "avg_expected_profit"]:
             if col in segment_display.columns:
                 segment_display[col] = segment_display[col].map(money)
@@ -4549,6 +4622,8 @@ elif view == "4. 예산 최적화 및 리텐션 타겟":
             }
         )
         if not candidate_by_segment.empty:
+            candidate_by_segment = candidate_by_segment.copy()                                          # ← 추가
+            candidate_by_segment["uplift_segment"] = candidate_by_segment["uplift_segment"].map(label_uplift_segment)  # ← 추가
             cand_fig = px.bar(
                 candidate_by_segment,
                 x="uplift_segment",
@@ -4562,6 +4637,7 @@ elif view == "4. 예산 최적화 및 리텐션 타겟":
             st.warning("현재 조건에서 예산 배분 대상 고객이 없습니다.")
         else:
             chart_df = segment_allocation.copy()
+            chart_df["uplift_segment"] = chart_df["uplift_segment"].map(label_uplift_segment)  # ← 추가
             label_threshold = float(chart_df["allocated_budget"].max()) * 0.08 if not chart_df.empty else 0.0
             chart_df["customer_count_label"] = np.where(
                 (chart_df["customer_count"] >= 5) | (chart_df["allocated_budget"] >= label_threshold),
@@ -5584,9 +5660,11 @@ elif view == "12. 데이터 진단 / 시뮬레이터 충실도":
 
         with tab2:
             if not event_mix_df.empty:
-                fig = px.bar(event_mix_df, x="event_type", y="count", title="이벤트 타입 분포", text="count")
+                event_mix_display = event_mix_df.copy()                                       # ← 추가
+                event_mix_display["event_type"] = event_mix_display["event_type"].map(label_event_type)  # ← 추가
+                fig = px.bar(event_mix_display, x="event_type", y="count", title="이벤트 타입 분포", text="count")  # ← event_mix_df → event_mix_display
                 st.plotly_chart(fig, use_container_width=True)
-                display_df = event_mix_df.copy()
+                display_df = event_mix_display.copy()                                          # ← event_mix_df → event_mix_display
                 if "share" in display_df.columns:
                     display_df["share"] = display_df["share"].map(lambda x: f"{float(x):.2%}")
                 _render_dataframe_with_count(display_df, label="이벤트 타입 분포", prefer_static=True)
@@ -5648,9 +5726,11 @@ elif view == "7. 할인·쿠폰 운영 리스크":
     with tab1:
         segment_df = coupon_risk_overview.get("segment_df", pd.DataFrame())
         if not segment_df.empty:
-            fig = px.bar(segment_df.head(12), x="persona", y="avg_coupon_exposure", hover_data=[col for col in ["avg_churn_probability", "avg_expected_roi"] if col in segment_df.columns], title="페르소나별 평균 쿠폰 노출")
+            segment_df_display = segment_df.copy()                                            # ← 추가
+            segment_df_display["persona"] = segment_df_display["persona"].map(label_persona)  # ← 추가
+            fig = px.bar(segment_df_display.head(12), x="persona", y="avg_coupon_exposure", hover_data=[col for col in ["avg_churn_probability", "avg_expected_roi"] if col in segment_df_display.columns], title="페르소나별 평균 쿠폰 노출")  # ← segment_df → segment_df_display
             st.plotly_chart(fig, use_container_width=True)
-            display_df = segment_df.copy()
+            display_df = segment_df_display.copy()                                            # ← segment_df → segment_df_display
             for col in ["avg_churn_probability", "avg_expected_roi"]:
                 if col in display_df.columns:
                     display_df[col] = display_df[col].map(lambda x: f"{float(x):.3f}")
