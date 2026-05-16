@@ -47,7 +47,7 @@ EVENT_TRANSITIONS = {
 FIRST_EVENT_TYPES = ["visit", "page_view", "search"]
 FIRST_EVENT_WEIGHTS = [0.55, 0.30, 0.15]
 
-CATEGORIES = ["fashion", "beauty", "grocery", "sports", "health", "electronics"]
+CATEGORIES = ["deposit", "loan", "card", "fund", "fx", "insurance"]
 
 
 def _get_next_customer_id(db_url: str) -> int:

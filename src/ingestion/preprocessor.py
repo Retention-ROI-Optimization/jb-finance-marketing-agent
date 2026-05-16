@@ -95,6 +95,7 @@ EVENT_TYPE_DESCRIPTIONS: Dict[str, str] = {
 
 EVENT_VALUE_SYNONYMS: Dict[str, Set[str]] = {
     "purchase": {
+        # 기존 이커머스 용어 (호환성 유지)
         "purchase", "purchased", "buy", "bought", "checkout", "checkout_complete",
         "checkout_start", "order", "order_complete", "order_placed", "transaction",
         "payment", "paid", "complete_purchase", "payment_success", "payment_complete",
@@ -102,33 +103,62 @@ EVENT_VALUE_SYNONYMS: Dict[str, Set[str]] = {
         "renewal", "renew", "plan_change", "plan_upgrade", "plan_downgrade",
         "upgrade", "downgrade",
         "결제", "구매", "주문", "주문완료", "결제완료",
+        # ── 금융 도메인 (신규 추가) ──
+        "account_open", "account_opened", "deposit_open", "savings_open",
+        "loan_execute", "loan_executed", "loan_disbursement",
+        "card_issue", "card_issued", "card_activate",
+        "fund_subscribe", "fund_purchase", "fund_buy",
+        "insurance_subscribe", "policy_open",
+        "transfer_complete", "remit_complete", "fx_complete",
+        "예금가입", "적금가입", "대출실행", "카드발급", "펀드매수",
+        "상품가입", "보험가입", "송금완료", "환전완료", "이체완료",
     },
     "visit": {
+        # 기존
         "visit", "visited", "session_start", "session_begin", "session_end",
         "session_close", "login", "logged_in", "logout", "log_out",
         "app_open", "app_close", "app_launch", "site_visit", "launch",
         "sign_in", "signin", "active_session", "push_open", "notification_open",
         "방문", "로그인", "접속", "세션시작", "세션종료",
+        # ── 금융 도메인 ──
+        "app_login", "ibk_login", "internet_banking_login", "banking_login",
+        "atm_login", "branch_visit", "kiosk_login",
+        "앱로그인", "인터넷뱅킹접속", "영업점방문", "ATM접속", "스마트뱅킹접속",
     },
     "page_view": {
+        # 기존
         "page_view", "pageview", "view", "viewed", "product_view", "viewed_product",
         "item_view", "page", "screen_view", "impression", "view_item",
         "view_item_list", "select_item", "scroll", "feature_use", "feature_view",
         "click", "tap", "select", "browse", "explore", "review_write", "review",
         "stream_start", "stream_complete", "stream_end", "watch", "watched",
         "video_play", "video_complete", "video_pause", "play", "pause", "resume",
-        "push_received", "notification_received", "coupon_use", "coupon", "point_use", "points_use",
+        "push_received", "notification_received", "coupon_use", "coupon",
+        "point_use", "points_use",
         "조회", "상품조회", "페이지뷰", "둘러보기",
+        # ── 금융 도메인 ──
+        "product_detail_view", "rate_view", "limit_view", "rate_page",
+        "account_check", "balance_check", "transaction_history_view",
+        "상품상세조회", "금리조회페이지", "잔액조회", "거래내역조회",
     },
     "search": {
         "search", "searched", "query", "find", "lookup", "filter", "sort",
         "검색", "필터",
+        # ── 금융 도메인 ──
+        "rate_inquiry", "rate_compare", "limit_inquiry", "product_search",
+        "fx_rate_check", "loan_calculator", "savings_calculator",
+        "금리조회", "금리비교", "한도조회", "환율조회", "상품검색", "대출계산기",
     },
     "add_to_cart": {
         "add_to_cart", "addtocart", "cart_add", "add_cart", "added_to_cart",
         "remove_from_cart", "cart_remove", "wishlist_add", "favorite", "favorited",
         "like", "liked", "bookmark", "save",
         "장바구니", "장바구니추가", "찜", "즐겨찾기",
+        # ── 금융 도메인 (가입 시작·관심상품) ──
+        "apply_start", "apply_in_progress", "application_start",
+        "electronic_agreement_start", "consent_start",
+        "interest_product_add", "favorite_product",
+        "가입시작", "약정진입", "전자약정시작", "신청시작", "관심상품등록",
     },
     "support_contact": {
         "support", "support_contact", "support_chat", "contact", "inquiry", "help",
@@ -137,6 +167,13 @@ EVENT_VALUE_SYNONYMS: Dict[str, Set[str]] = {
         "refund_request", "refund", "return", "returned", "return_request", "cancel_request",
         "cancel", "cancellation", "uninstall", "uninstall_signal", "unsubscribe",
         "문의", "상담", "고객센터", "신고", "환불", "반품", "취소", "해지",
+        # ── 금융 도메인 ──
+        "chatbot", "chatbot_session", "kakao_consult",
+        "loan_consult", "branch_consult", "private_banker_contact", "pb_contact",
+        "cancellation_request", "early_termination", "maturity_termination",
+        "card_cancel", "card_loss_report", "card_block",
+        "챗봇상담", "카톡상담", "대출상담", "영업점상담", "PB상담",
+        "해지신청", "중도해지", "만기해지", "카드해지", "분실신고", "거래정지",
     },
 }
 
@@ -979,7 +1016,7 @@ def _generate_synthetic_events(customer_summary: pd.DataFrame, rng: np.random.Ge
                 "timestamp": ts,
                 "event_type": event_type,
                 "session_id": f"SES-{cid}-{i // 3}",
-                "item_category": rng.choice(["fashion", "beauty", "grocery", "sports", "health"]),
+                "item_category": rng.choice(["deposit", "loan", "card", "fund", "fx"]),
                 "quantity": int(rng.integers(1, 4)),
             })
     return pd.DataFrame(rows)

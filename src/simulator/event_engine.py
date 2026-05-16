@@ -20,8 +20,14 @@ from .order_builder import build_orders
 from .state_tracker import StateTracker
 
 
+<<<<<<< HEAD
 _ITEM_CATEGORIES = np.array(["fashion", "beauty", "personal_care", "grocery", "sports", "health"], dtype=object)
 _CATEGORY_PROBS = np.array([0.20, 0.18, 0.18, 0.16, 0.14, 0.14], dtype=float)
+=======
+# 금융 상품 카테고리. 예적금 거래가 가장 빈번한 도메인 직관 반영.
+_ITEM_CATEGORIES = np.array(["deposit", "loan", "card", "fund", "fx", "insurance"], dtype=object)
+_CATEGORY_PROBS = np.array([0.30, 0.18, 0.20, 0.12, 0.10, 0.10], dtype=float)
+>>>>>>> main
 
 
 def _empty_event_frame() -> pd.DataFrame:
